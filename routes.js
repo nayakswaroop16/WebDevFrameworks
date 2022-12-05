@@ -1,9 +1,19 @@
-const { query } = require("express");
+const { query, Router } = require("express");
 const express = require("express");
 const Restaurant = require("./models/Restaurant");
 const bodyParser = require("body-parser"); // pull information from HTML POST (express4)
 const Controller = require("./controller");
 const router = express.Router();
+const session = require("express-session");
+const authorize = require("./authorize");
+router.use(
+	session({
+		secret: "spooky secret",
+		cookie: { maxAge: 400000 },
+		saveUninitialized: false,
+	})
+);
+
 router.use(bodyParser.urlencoded({ extended: "true" })); // parse application/x-www-form-urlencoded
 
 // POST
@@ -41,6 +51,47 @@ router.get("/api/restaurants/:restaurant_id?", async (req, res) => {
 		);
 		return res.send(resp);
 	}
+});
+
+router.get("/api/find-restaurant", async (req, res) => {
+	if (req.session.authenticated) {
+		res.render("form");
+	} else {
+		res.render("login", { error: "" });
+	}
+});
+
+router.post("/login", async (req, res) => {
+	console.log(session.secret);
+	const { username, password } = req.body;
+	console.log(password);
+	if (username && password) {
+		if (req.session.authenticated) {
+			res.redirect("/api/find-restaurant");
+		} else {
+			let checkPassword = await authorize.checkPassword(password);
+			if (checkPassword) {
+				req.session.authenticated = true;
+				req.session.user = {
+					username,
+					password,
+				};
+				res.redirect("/api/find-restaurant");
+			} else {
+				res.render("login", { error: "Invalid credentials!" });
+			}
+		}
+	}
+	else res.render("login", { error: "Invalid credentials!" });
+});
+
+router.get("/api/display-restaurants", async (req, res) => {
+	const resp = await Controller.getAllRestaurants(
+		req.query.page,
+		req.query.perPage,
+		req.query.borough
+	);
+	res.render("table", { restaurants: resp });
 });
 
 //PUT
