@@ -1,6 +1,6 @@
 const { query, Router } = require("express");
 const express = require("express");
-const Restaurant = require("./models/Restaurant");
+const Restaurant = require("./models/restaurant");
 const bodyParser = require("body-parser"); // pull information from HTML POST (express4)
 const Controller = require("./controller");
 const router = express.Router();

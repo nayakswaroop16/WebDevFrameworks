@@ -1,4 +1,4 @@
-const Restaurant = require("./models/Restaurant");
+const Restaurant = require("./models/restaurant");
 
 const addNewRestaurant = async (data) => {
 	const restaurant = await Restaurant.create(data);
